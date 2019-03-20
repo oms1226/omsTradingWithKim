@@ -16,7 +16,8 @@ class MyWindow(QMainWindow):
         self.kiwoom.OnReceiveTrData.connect(self.receive_trdata)
 
         self.setWindowTitle("PyStock")
-        self.setGeometry(300, 300, 300, 150)
+        # self.setGeometry(300, 300, 300, 150)
+        self.setGeometry(300, 300, 600, 150)
 
         label = QLabel('종목코드: ', self)
         label.move(20, 20)
@@ -28,6 +29,10 @@ class MyWindow(QMainWindow):
         btn1 = QPushButton("조회", self)
         btn1.move(190, 20)
         btn1.clicked.connect(self.btn1_clicked)
+
+        btn2 = QPushButton("사기", self)
+        btn2.move(300, 20)
+        btn2.clicked.connect(self.btn2_clicked)
 
         self.text_edit = QTextEdit(self)
         self.text_edit.setGeometry(10, 60, 280, 80)
@@ -46,6 +51,16 @@ class MyWindow(QMainWindow):
 
 
     def btn1_clicked(self):
+        code = self.code_edit.text()
+        self.text_edit.append("종목코드: " + code)
+
+        # SetInputValue
+        self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
+
+        # CommRqData
+        self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)", "opt10001_req", "opt10001", 0, "0101")
+
+    def btn2_clicked(self):
         code = self.code_edit.text()
         self.text_edit.append("종목코드: " + code)
 
