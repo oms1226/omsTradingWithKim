@@ -14,6 +14,7 @@ class MyWindow(QMainWindow):
         # OpenAPI+ Event
         self.kiwoom.OnEventConnect.connect(self.event_connect)
         self.kiwoom.OnReceiveTrData.connect(self.receive_trdata)
+        self.kiwoom.OnReceiveChejanData.connect(self._receive_chejan_data)
 
         self.setWindowTitle("PyStock")
         # self.setGeometry(300, 300, 300, 150)
@@ -62,13 +63,28 @@ class MyWindow(QMainWindow):
 
     def btn2_clicked(self):
         code = self.code_edit.text()
-        self.text_edit.append("종목코드: " + code)
+
 
         # SetInputValue
         self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
 
         # CommRqData
         self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)", "opt10001_req", "opt10001", 0, "0101")
+
+    def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
+        self.kiwoom.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                         [rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no])
+
+    def get_chejan_data(self, fid):
+        ret = self.kiwoom.dynamicCall("GetChejanData(int)", fid)
+        return ret
+
+    def _receive_chejan_data(self, gubun, item_cnt, fid_list):
+        print(gubun)
+        print(self.get_chejan_data(9203))
+        print(self.get_chejan_data(302))
+        print(self.get_chejan_data(900))
+        print(self.get_chejan_data(901))
 
     def receive_trdata(self, screen_no, rqname, trcode, recordname, prev_next, data_len, err_code, msg1, msg2):
         if rqname == "opt10001_req":
