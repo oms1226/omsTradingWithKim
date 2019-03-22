@@ -13,7 +13,9 @@ class MyWindow(QMainWindow):
 
         # OpenAPI+ Event
         self.kiwoom.OnEventConnect.connect(self.event_connect)
+        self.kiwoom.OnReceiveMsg.connect(self._OnReceiveMsg)
         self.kiwoom.OnReceiveTrData.connect(self.receive_trdata)
+        # Buy
         self.kiwoom.OnReceiveChejanData.connect(self._receive_chejan_data)
 
         self.setWindowTitle("PyStock")
@@ -61,16 +63,27 @@ class MyWindow(QMainWindow):
         # CommRqData
         self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)", "opt10001_req", "opt10001", 0, "0101")
 
+        # Buy
     def btn2_clicked(self):
-        code = self.code_edit.text()
+        # Buy
+        self.send_order("RQ_1", "0101", "8115483011", 1, "005930", 1, 0, "03", "");
 
-
-        # SetInputValue
-        self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
-
-        # CommRqData
-        self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)", "opt10001_req", "opt10001", 0, "0101")
-
+    # 주식 주문을 서버로 전송한다.
+    # sRQName - 사용자 구분 요청 명
+    # sScreenNo - 화면번호[4]
+    # sAccNo - 계좌번호[10]
+    # nOrderType - 주문유형 (1:신규매수, 2:신규매도, 3:매수취소, 4:매도취소, 5:매수정정, 6:매도정정)
+    # sCode, - 주식종목코드
+    # nQty – 주문수량
+    # nPrice – 주문단가
+    # sHogaGb - 거래구분
+    # sHogaGb – 00:지정가, 03:시장가, 05:조건부지정가, 06:최유리지정가, 07:최우선지정가, 10:지정가IOC, 13:시장가IOC, 16:최유리IOC, 20:지정가FOK, 23:시장가FOK, 26:최유리FOK, 61:장전시간외종가, 62:시간외단일가, 81:장후시간외종가
+    # ※ 시장가, 최유리지정가, 최우선지정가, 시장가IOC, 최유리IOC, 시장가FOK, 최유리FOK, 장전시간외, 장후시간외 주문시 주문가격을 입력하지 않습니다.
+    # ex)
+    # 지정가 매수 - openApi.SendOrder(“RQ_1”, “0101”, “5015123410”, 1, “000660”, 10, 48500, “00”, “”);
+    # 시장가 매수 - openApi.SendOrder(“RQ_1”, “0101”, “5015123410”, 1, “000660”, 10, 0, “03”, “”);
+    # 매수 정정 - openApi.SendOrder(“RQ_1”,“0101”, “5015123410”, 5, “000660”, 10, 49500, “00”, “1”);
+    # 매수 취소 - openApi.SendOrder(“RQ_1”, “0101”, “5015123410”, 3, “000660”, 10, “00”, “2”);
     def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
         self.kiwoom.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
                          [rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no])
@@ -85,6 +98,13 @@ class MyWindow(QMainWindow):
         print(self.get_chejan_data(302))
         print(self.get_chejan_data(900))
         print(self.get_chejan_data(901))
+
+    # 수신 메시지 이벤트
+    #'[00Z218] 모의투자 장종료 상태입니다'
+    def _OnReceiveMsg(self, scrNo, rQName, trCode, msg):
+        code = self.code_edit.text()
+        self.text_edit.append(msg)
+        print(msg)
 
     def receive_trdata(self, screen_no, rqname, trcode, recordname, prev_next, data_len, err_code, msg1, msg2):
         if rqname == "opt10001_req":
