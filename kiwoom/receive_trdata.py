@@ -2,6 +2,9 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import  *
 from PyQt5.QAxContainer import *
+from telegram.ext import Updater, MessageHandler, Filters  # import modules
+
+my_token = '785644573:AAFfG2eDynFv_pEnHI5zCzlpOU386fMkRHc'
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -41,10 +44,15 @@ class MyWindow(QMainWindow):
         self.text_edit.setGeometry(10, 60, 280, 80)
         self.text_edit.setEnabled(False)
 
+    # message reply function
+    def get_message(bot, update):
+        update.message.reply_text("got text in the windows")
+        update.message.reply_text(update.message.text)
+
     def event_connect(self, err_code):
         if err_code == 0:
             self.text_edit.append("로그인 성공")
-            # 계좌에 예수금 조회 성공
+            # 계좌에 예수금 조회 성공222
             self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "계좌번호", "8115483011")
             self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "비밀번호", "0000")
             self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "상장폐지조회구분", "0")
@@ -116,10 +124,27 @@ class MyWindow(QMainWindow):
         elif rqname =='opw00004_req':
             mymoney = self.kiwoom.dynamicCall("CommGetData(QString, QString, QString, int, QString)", trcode, "", rqname, 0, "예수금")
             self.text_edit.append("예수금: " + mymoney.strip())
-
+# message reply function
+def get_message(bot, update):
+    update.message.reply_text("got text")
+    update.message.reply_text(update.message.text)
 
 if __name__ == "__main__":
+    # telegram
     app = QApplication(sys.argv)
     myWindow = MyWindow()
     myWindow.show()
+
+    if True:
+        print('start telegram chat bot')
+        updater = Updater(my_token)
+
+        message_handler = MessageHandler(Filters.text, get_message)
+        updater.dispatcher.add_handler(message_handler)
+
+        updater.start_polling(timeout=3, clean=True)
+        print('end telegram chat bot')
+        # updater.idle()
+
     app.exec_()
+
