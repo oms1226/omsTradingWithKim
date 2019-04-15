@@ -1,15 +1,17 @@
 import sys
+
+import telegram
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import  *
 from PyQt5.QAxContainer import *
 from telegram.ext import Updater, MessageHandler, Filters  # import modules
 
 my_token = '785644573:AAFfG2eDynFv_pEnHI5zCzlpOU386fMkRHc'
-
+TELEGRAM_BOT = None
 class MyWindow(QMainWindow):
+    global TELEGRAM_BOT
     def __init__(self):
         super().__init__()
-
         # Kiwoom Login
         self.kiwoom = QAxWidget("KHOPENAPI.KHOpenAPICtrl.1")
         self.kiwoom.dynamicCall("CommConnect()")
@@ -38,16 +40,11 @@ class MyWindow(QMainWindow):
 
         btn2 = QPushButton("사기", self)
         btn2.move(300, 20)
-        btn2.clicked.connect(self.btn2_clicked)
+        btn2.clicked.connect(self.buy)
 
         self.text_edit = QTextEdit(self)
         self.text_edit.setGeometry(10, 60, 280, 80)
         self.text_edit.setEnabled(False)
-
-    # message reply function
-    def get_message(bot, update):
-        update.message.reply_text("got text in the windows")
-        update.message.reply_text(update.message.text)
 
     def event_connect(self, err_code):
         if err_code == 0:
@@ -72,7 +69,7 @@ class MyWindow(QMainWindow):
         self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)", "opt10001_req", "opt10001", 0, "0101")
 
         # Buy
-    def btn2_clicked(self):
+    def buy(self):
         # Buy
         self.send_order("RQ_1", "0101", "8115483011", 1, "005930", 1, 0, "03", "");
 
@@ -113,6 +110,22 @@ class MyWindow(QMainWindow):
         code = self.code_edit.text()
         self.text_edit.append(msg)
         print(msg)
+        # self.bot.sendMessage(chat_id=bot.getUpdates()[-1].message.chat.id, text=msg)
+        # self.bot.sendMessage(text=msg)
+        #Async를 만들어야 된다.//sendmessage telegram.error.Unauthorized: Forbidden: bot can't send messages to bots
+        return //아래 부분을 핸들러 방식으로 변경하자!
+        try:
+            botUpdates = TELEGRAM_BOT.getUpdates()
+        except:
+            #Unexpected error:  <class 'telegram.error.NetworkError'> Conflict: terminated by other getUpdates request; make sure that only one bot instance is running (409)
+            print("Unexpected error: ", sys.exc_info()[0], sys.exc_info()[1])
+
+        if len(botUpdates) > 0:
+            bot_chat_id = TELEGRAM_BOT.getUpdates()[-1].message.chat.id
+
+        TELEGRAM_BOT.sendMessage(chat_id=bot_chat_id, text=msg)
+
+
 
     def receive_trdata(self, screen_no, rqname, trcode, recordname, prev_next, data_len, err_code, msg1, msg2):
         if rqname == "opt10001_req":
@@ -126,25 +139,29 @@ class MyWindow(QMainWindow):
             self.text_edit.append("예수금: " + mymoney.strip())
 # message reply function
 def get_message(bot, update):
+    global TELEGRAM_BOT
+    TELEGRAM_BOT = bot
     update.message.reply_text("got text")
     update.message.reply_text(update.message.text)
 
+    myWindow.text_edit.append(update.message.text)
+    myWindow.code_edit.clear()
+    myWindow.code_edit.setText(update.message.text)
+
 if __name__ == "__main__":
     # telegram
+    if True:
+        print('start telegram chat bot')
+        TELEGRAM_BOT = telegram.Bot(token=my_token)
+        # bot.sendMessage(chat_id='@omsStockWithKimBot', text="omsStockWithKimBot")
+        updater = Updater(bot=TELEGRAM_BOT)
+        message_handler = MessageHandler(Filters.text, get_message)
+        updater.dispatcher.add_handler(message_handler)
+        updater.start_polling(timeout=3, clean=True)
+        print('end telegram chat bot')
+        #updater.idle()
+
     app = QApplication(sys.argv)
     myWindow = MyWindow()
     myWindow.show()
-
-    if True:
-        print('start telegram chat bot')
-        updater = Updater(my_token)
-
-        message_handler = MessageHandler(Filters.text, get_message)
-        updater.dispatcher.add_handler(message_handler)
-
-        updater.start_polling(timeout=3, clean=True)
-        print('end telegram chat bot')
-        # updater.idle()
-
     app.exec_()
-
