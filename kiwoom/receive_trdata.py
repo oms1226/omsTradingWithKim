@@ -1,5 +1,7 @@
 import sys
 
+import requests
+import time
 import telegram
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import  *
@@ -8,6 +10,7 @@ from telegram.ext import Updater, MessageHandler, Filters  # import modules
 
 my_token = '785644573:AAFfG2eDynFv_pEnHI5zCzlpOU386fMkRHc'
 TELEGRAM_BOT = None
+
 class MyWindow(QMainWindow):
     global TELEGRAM_BOT
     def __init__(self):
@@ -109,22 +112,7 @@ class MyWindow(QMainWindow):
     def _OnReceiveMsg(self, scrNo, rQName, trCode, msg):
         code = self.code_edit.text()
         self.text_edit.append(msg)
-        print(msg)
-        # self.bot.sendMessage(chat_id=bot.getUpdates()[-1].message.chat.id, text=msg)
-        # self.bot.sendMessage(text=msg)
-        #Async를 만들어야 된다.//sendmessage telegram.error.Unauthorized: Forbidden: bot can't send messages to bots
-        return //아래 부분을 핸들러 방식으로 변경하자!
-        try:
-            botUpdates = TELEGRAM_BOT.getUpdates()
-        except:
-            #Unexpected error:  <class 'telegram.error.NetworkError'> Conflict: terminated by other getUpdates request; make sure that only one bot instance is running (409)
-            print("Unexpected error: ", sys.exc_info()[0], sys.exc_info()[1])
-
-        if len(botUpdates) > 0:
-            bot_chat_id = TELEGRAM_BOT.getUpdates()[-1].message.chat.id
-
-        TELEGRAM_BOT.sendMessage(chat_id=bot_chat_id, text=msg)
-
+        print(self.telegram_bot_sendtext(msg))
 
 
     def receive_trdata(self, screen_no, rqname, trcode, recordname, prev_next, data_len, err_code, msg1, msg2):
@@ -137,6 +125,13 @@ class MyWindow(QMainWindow):
         elif rqname =='opw00004_req':
             mymoney = self.kiwoom.dynamicCall("CommGetData(QString, QString, QString, int, QString)", trcode, "", rqname, 0, "예수금")
             self.text_edit.append("예수금: " + mymoney.strip())
+
+    def telegram_bot_sendtext(self, bot_message):
+        bot_chatID = '127299666'
+        send_text = 'https://api.telegram.org/bot' + my_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
+        response = requests.get(send_text)
+        return response.json()
+
 # message reply function
 def get_message(bot, update):
     global TELEGRAM_BOT
@@ -147,6 +142,9 @@ def get_message(bot, update):
     myWindow.text_edit.append(update.message.text)
     myWindow.code_edit.clear()
     myWindow.code_edit.setText(update.message.text)
+
+
+
 
 if __name__ == "__main__":
     # telegram
